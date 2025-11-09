@@ -1,9 +1,13 @@
+/* execute.c
+ * Contains: Command execution engine
+ * Features: 1 (basic), 2 (I/O redirection), 3 (piping), 6 (background jobs)
+ * Called by: main.c handle_execute_block(), main.c handle_builtin()
+ * Calls: fork(), execvp(), waitpid(), dup2(), open(), close()
+ * Note: COMPLETELY UNCHANGED - NO MODIFICATIONS for Feature 7
+ * Global variables: USES jobs_list[], jobs_count from main.c (extern)
+ */
+
 #include "shell.h"
-
-job_t jobs_list[MAX_JOBS];
-int jobs_count = 0;
-
-
 
 int execute(char* arglist[]) {
     int status;
@@ -77,18 +81,18 @@ int execute(char* arglist[]) {
             fprintf(stderr, "Error: command not found: %s\n", arglist[0]);
             exit(1);
         } else {
-        	if (!run_in_background) {
-    			waitpid(cpid, &status, 0); // foreground
-			} else {
-    			printf("[Background] PID: %d\n", cpid);
-			    // Store in background job list
-			    if (jobs_count < MAX_JOBS) {
-			        jobs_list[jobs_count].pid = cpid;
-			        strncpy(jobs_list[jobs_count].cmd, arglist[0], 255);
-			        jobs_list[jobs_count].cmd[255] = '\0';
-			        jobs_count++;
-			    }
-			}
+            if (!run_in_background) {
+                waitpid(cpid, &status, 0); // foreground
+            } else {
+                printf("[Background] PID: %d\n", cpid);
+                // Store in background job list
+                if (jobs_count < MAX_JOBS) {
+                    jobs_list[jobs_count].pid = cpid;
+                    strncpy(jobs_list[jobs_count].cmd, arglist[0], 255);
+                    jobs_list[jobs_count].cmd[255] = '\0';
+                    jobs_count++;
+                }
+            }
 
         }
         return 0;
@@ -189,25 +193,23 @@ int execute(char* arglist[]) {
 
     // --- Step 7: Parent closes pipe and waits ---
     close(fd[0]); close(fd[1]);
-	if (!run_in_background) {
-	    waitpid(left_cpid, &status, 0);
-	    waitpid(right_cpid, &status, 0);
-	} else {
-	    printf("[Background] PIDs: %d, %d\n", left_cpid, right_cpid);
-	    if (jobs_count + 2 <= MAX_JOBS) {
-	        jobs_list[jobs_count].pid = left_cpid;
-	        strncpy(jobs_list[jobs_count].cmd, left_cmd[0], 255);
-	        jobs_list[jobs_count].cmd[255] = '\0';
-	        jobs_count++;
-	
-	        jobs_list[jobs_count].pid = right_cpid;
-	        strncpy(jobs_list[jobs_count].cmd, right_cmd[0], 255);
-	        jobs_list[jobs_count].cmd[255] = '\0';
-	        jobs_count++;
-	    }
-	}
+    if (!run_in_background) {
+        waitpid(left_cpid, &status, 0);
+        waitpid(right_cpid, &status, 0);
+    } else {
+        printf("[Background] PIDs: %d, %d\n", left_cpid, right_cpid);
+        if (jobs_count + 2 <= MAX_JOBS) {
+            jobs_list[jobs_count].pid = left_cpid;
+            strncpy(jobs_list[jobs_count].cmd, left_cmd[0], 255);
+            jobs_list[jobs_count].cmd[255] = '\0';
+            jobs_count++;
 
+            jobs_list[jobs_count].pid = right_cpid;
+            strncpy(jobs_list[jobs_count].cmd, right_cmd[0], 255);
+            jobs_list[jobs_count].cmd[255] = '\0';
+            jobs_count++;
+        }
+    }
 
     return 0;
 }
-
