@@ -1,5 +1,8 @@
 #ifndef SHELL_H
 #define SHELL_H
+#define MAX_JOBS 100
+
+
 
 #include <stdio.h>
 #include <string.h>
@@ -38,8 +41,24 @@ void add_to_history(const char* cmdline);
 int handle_bang_command(char** cmdline_ptr);
 
 
+
+
 // Readline initialization
 void initialize_readline();
+
+//feature 6
+typedef struct {
+    pid_t pid;
+    char cmd[256];
+} job_t;
+
+//feature 6
+void reap_background_jobs();
+
+
+// Declare (not define) here
+extern job_t jobs_list[MAX_JOBS];
+extern int jobs_count;
 
 #endif // SHELL_H
 
