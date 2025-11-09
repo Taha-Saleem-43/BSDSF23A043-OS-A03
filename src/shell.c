@@ -33,18 +33,31 @@ char** tokenize(char* cmdline) {
         while (*cp == ' ' || *cp == '\t') cp++;
         if (*cp == '\0') break;
 
+        // Special single-character tokens: <, >, |
+        if (*cp == '<' || *cp == '>' || *cp == '|') {
+            arglist[argnum][0] = *cp;
+            arglist[argnum][1] = '\0';
+            cp++;
+            argnum++;
+            continue;
+        }
+
+        // Regular token
         start = cp;
-        len = 1;
-        while (*++cp != '\0' && !(*cp == ' ' || *cp == '\t')) {
+        len = 0;
+        while (*cp != '\0' && *cp != ' ' && *cp != '\t' && *cp != '<' && *cp != '>' && *cp != '|') {
+            cp++;
             len++;
         }
+
+        if (len > ARGLEN - 1) len = ARGLEN - 1;
         strncpy(arglist[argnum], start, len);
         arglist[argnum][len] = '\0';
         argnum++;
     }
 
     if (argnum == 0) {
-        for(int i = 0; i < MAXARGS + 1; i++) free(arglist[i]);
+        for (int i = 0; i < MAXARGS + 1; i++) free(arglist[i]);
         free(arglist);
         return NULL;
     }
@@ -52,6 +65,7 @@ char** tokenize(char* cmdline) {
     arglist[argnum] = NULL;
     return arglist;
 }
+
 
 /* ------------------------------
    NEW FUNCTION FOR BUILT-INS
