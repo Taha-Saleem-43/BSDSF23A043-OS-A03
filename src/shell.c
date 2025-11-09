@@ -12,6 +12,21 @@ void initialize_readline() {
     using_history();
 }
 
+void reap_background_jobs() {
+    int status;
+    for (int i = 0; i < jobs_count; ) {
+        pid_t ret = waitpid(jobs_list[i].pid, &status, WNOHANG);
+        if (ret > 0) {
+            // remove job from list
+            for (int j = i; j < jobs_count-1; j++)
+                jobs_list[j] = jobs_list[j+1];
+            jobs_count--;
+        } else {
+            i++;
+        }
+    }
+}
+
 
 char** tokenize(char* cmdline) {
     if (cmdline == NULL || cmdline[0] == '\0' || cmdline[0] == '\n') {
@@ -103,11 +118,16 @@ int handle_builtin(char **arglist) {
         return 1;
     }
 
-    // jobs command
-    else if (strcmp(arglist[0], "jobs") == 0) {
-        printf("Job control not yet implemented.\n");
-        return 1;
-    }
+	// jobs command
+	else if (strcmp(arglist[0], "jobs") == 0) {
+	    reap_background_jobs();  // clean up any finished jobs first
+	
+	    for (int i = 0; i < jobs_count; i++) {
+	        printf("[%d] PID: %d CMD: %s\n", i + 1, jobs_list[i].pid, jobs_list[i].cmd);
+	    }
+	    return 1;
+	}
+
 
     // history command
 	else if (strcmp(arglist[0], "history") == 0) {

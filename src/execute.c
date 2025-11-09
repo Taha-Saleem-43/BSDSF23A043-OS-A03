@@ -1,8 +1,22 @@
 #include "shell.h"
 
+job_t jobs_list[MAX_JOBS];
+int jobs_count = 0;
+
+
 
 int execute(char* arglist[]) {
     int status;
+    int run_in_background = 0;
+
+    // --- Step 0: Check for '&' at the end ---
+    for (int i = 0; arglist[i] != NULL; i++) {
+        if (strcmp(arglist[i], "&") == 0) {
+            run_in_background = 1;
+            arglist[i] = NULL; // remove '&' from arguments
+            break;
+        }
+    }
 
     // --- Step 1: Check for pipe ---
     int pipe_index = -1;
@@ -14,7 +28,7 @@ int execute(char* arglist[]) {
     }
 
     if (pipe_index == -1) {
-        // --- No pipe: single command with possible I/O redirection ---
+        // --- No pipe: single command with I/O redirection ---
         int cpid = fork();
         if (cpid < 0) { perror("fork failed"); exit(1); }
 
@@ -63,7 +77,19 @@ int execute(char* arglist[]) {
             fprintf(stderr, "Error: command not found: %s\n", arglist[0]);
             exit(1);
         } else {
-            waitpid(cpid, &status, 0);
+        	if (!run_in_background) {
+    			waitpid(cpid, &status, 0); // foreground
+			} else {
+    			printf("[Background] PID: %d\n", cpid);
+			    // Store in background job list
+			    if (jobs_count < MAX_JOBS) {
+			        jobs_list[jobs_count].pid = cpid;
+			        strncpy(jobs_list[jobs_count].cmd, arglist[0], 255);
+			        jobs_list[jobs_count].cmd[255] = '\0';
+			        jobs_count++;
+			    }
+			}
+
         }
         return 0;
     }
@@ -163,8 +189,24 @@ int execute(char* arglist[]) {
 
     // --- Step 7: Parent closes pipe and waits ---
     close(fd[0]); close(fd[1]);
-    waitpid(left_cpid, &status, 0);
-    waitpid(right_cpid, &status, 0);
+	if (!run_in_background) {
+	    waitpid(left_cpid, &status, 0);
+	    waitpid(right_cpid, &status, 0);
+	} else {
+	    printf("[Background] PIDs: %d, %d\n", left_cpid, right_cpid);
+	    if (jobs_count + 2 <= MAX_JOBS) {
+	        jobs_list[jobs_count].pid = left_cpid;
+	        strncpy(jobs_list[jobs_count].cmd, left_cmd[0], 255);
+	        jobs_list[jobs_count].cmd[255] = '\0';
+	        jobs_count++;
+	
+	        jobs_list[jobs_count].pid = right_cpid;
+	        strncpy(jobs_list[jobs_count].cmd, right_cmd[0], 255);
+	        jobs_list[jobs_count].cmd[255] = '\0';
+	        jobs_count++;
+	    }
+	}
+
 
     return 0;
 }

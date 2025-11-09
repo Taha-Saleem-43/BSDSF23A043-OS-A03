@@ -4,6 +4,7 @@
 char* history[HISTORY_SIZE];
 int history_count = 0;  // total number of commands entered
 
+void reap_background_jobs();
 
 void add_to_history(const char* cmdline) {
     if (history_count < HISTORY_SIZE) {
@@ -62,30 +63,54 @@ int main() {
     initialize_readline();
 
 
-	while ((cmdline = readline(PROMPT)) != NULL) {
+while ((cmdline = readline(PROMPT)) != NULL) {
 	
-	    if (*cmdline == '\0') {
-	        free(cmdline);
-	        continue; // skip empty input
-	    }
-	
-	    handle_bang_command(&cmdline);    // handle !n
-	    add_to_history(cmdline);           // numbered history
-	
-	    add_history(cmdline);              // GNU Readline history
-	
-	    if ((arglist = tokenize(cmdline)) != NULL) {
-	        if (!handle_builtin(arglist)) {
-	            execute(arglist);
-	        }
-	
-	        for (int i = 0; arglist[i] != NULL; i++)
-	            free(arglist[i]);
-	        free(arglist);
-	    }
-	
-	    free(cmdline);
-	}
+	 reap_background_jobs();  // Task 4: clean up zombies
+
+    if (*cmdline == '\0') {
+        free(cmdline);
+        continue; // skip empty input
+    }
+
+    // Split input by ';'
+    char* cmd_ptr = cmdline;
+    char* command;
+    while ((command = strsep(&cmd_ptr, ";")) != NULL) {
+		// Trim leading spaces
+		while (*command == ' ' || *command == '\t') command++;
+		
+		// Trim trailing spaces
+		char* end = command + strlen(command) - 1;
+		while (end > command && (*end == ' ' || *end == '\t')) {
+		    *end = '\0';
+		    end--;
+		}
+		
+		if (*command == '\0') continue;
+
+
+        char* cmd_copy = strdup(command);
+
+        handle_bang_command(&cmd_copy);    // handle !n
+        add_to_history(cmd_copy);           // numbered history
+        add_history(cmd_copy);              // GNU Readline history
+
+        if ((arglist = tokenize(cmd_copy)) != NULL) {
+            if (!handle_builtin(arglist)) {
+                execute(arglist);          // run the command
+            }
+
+            for (int i = 0; arglist[i] != NULL; i++)
+                free(arglist[i]);
+            free(arglist);
+        }
+
+        free(cmd_copy);
+    }
+
+    free(cmdline);
+
+}
 
 
 
