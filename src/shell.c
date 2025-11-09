@@ -241,6 +241,7 @@ int handle_builtin(char **arglist) {
         return 1;
     }
     // help command
+    // Help command after the issue is resolved
     else if (strcmp(arglist[0], "help") == 0) {
         printf("Built-in commands:\n");
         printf("  cd <dir>            - Change directory\n");
