@@ -6,7 +6,11 @@ int main() {
 
     while ((cmdline = read_cmd(PROMPT, stdin)) != NULL) {
         if ((arglist = tokenize(cmdline)) != NULL) {
-            execute(arglist);
+            
+            // ?? Check for built-in commands first
+            if (!handle_builtin(arglist)) {
+                execute(arglist);
+            }
 
             // Free the memory allocated by tokenize()
             for (int i = 0; arglist[i] != NULL; i++) {
@@ -20,3 +24,4 @@ int main() {
     printf("\nShell exited.\n");
     return 0;
 }
+
