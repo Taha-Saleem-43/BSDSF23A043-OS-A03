@@ -3,12 +3,14 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <ctype.h>  // for isdigit()
+#include <errno.h>
 
 //Additional External Libraries
 #include <readline/readline.h>
