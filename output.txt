@@ -1,0 +1,9 @@
+total 8
+-rwxrwxrwx 1 tahadev tahadev 850 Nov  9 20:27 Makefile
+-rwxrwxrwx 1 tahadev tahadev 769 Nov  9 12:41 README.md
+drwxrwxrwx 1 tahadev tahadev 512 Nov  9 21:05 bin
+-rwxrwxrwx 1 tahadev tahadev 379 Nov  9 20:44 files.txt
+drwxrwxrwx 1 tahadev tahadev 512 Nov  9 20:27 include
+drwxrwxrwx 1 tahadev tahadev 512 Nov  9 21:05 obj
+-rwxrwxrwx 1 tahadev tahadev   0 Nov  9 21:07 output.txt
+drwxrwxrwx 1 tahadev tahadev 512 Nov  9 20:27 src
