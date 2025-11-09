@@ -1,5 +1,6 @@
 #include "shell.h"
 
+
 char* history[HISTORY_SIZE];
 int history_count = 0;  // total number of commands entered
 
@@ -57,27 +58,35 @@ int handle_bang_command(char** cmdline_ptr) {
 int main() {
     char* cmdline;
     char** arglist;
+    
+    initialize_readline();
 
-	while ((cmdline = read_cmd(PROMPT, stdin)) != NULL) {
+
+	while ((cmdline = readline(PROMPT)) != NULL) {
 	
-	    // Handle !n commands
-	    handle_bang_command(&cmdline);
+	    if (*cmdline == '\0') {
+	        free(cmdline);
+	        continue; // skip empty input
+	    }
 	
-	    // Add command to history (after !n is resolved)
-	    add_to_history(cmdline);
+	    handle_bang_command(&cmdline);    // handle !n
+	    add_to_history(cmdline);           // numbered history
+	
+	    add_history(cmdline);              // GNU Readline history
 	
 	    if ((arglist = tokenize(cmdline)) != NULL) {
 	        if (!handle_builtin(arglist)) {
 	            execute(arglist);
 	        }
 	
-	        for (int i = 0; arglist[i] != NULL; i++) {
+	        for (int i = 0; arglist[i] != NULL; i++)
 	            free(arglist[i]);
-	        }
 	        free(arglist);
 	    }
+	
 	    free(cmdline);
 	}
+
 
 
     printf("\nShell exited.\n");
