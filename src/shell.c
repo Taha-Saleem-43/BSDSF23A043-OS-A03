@@ -91,6 +91,7 @@ int handle_builtin(char **arglist) {
         printf("  help       - Show this help message\n");
         printf("  exit       - Exit the shell\n");
         printf("  jobs       - Placeholder command\n");
+        printf("  history    - Show command history\n");
         return 1;
     }
 
@@ -100,6 +101,18 @@ int handle_builtin(char **arglist) {
         return 1;
     }
 
+    // history command
+	else if (strcmp(arglist[0], "history") == 0) {
+	    int count = history_count < HISTORY_SIZE ? history_count : HISTORY_SIZE;
+	
+	    for (int i = 0; i < count; i++) {
+	        printf("%d %s\n", i + 1, history[i]);
+	    }
+	    return 1;
+	}
+
+
     return 0; // Not a built-in
 }
+
 
