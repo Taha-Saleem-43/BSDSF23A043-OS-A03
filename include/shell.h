@@ -2,6 +2,7 @@
 #define SHELL_H
 #define MAX_JOBS 100
 #define MAX_BLOCK_LINES 50
+#define MAX_VARIABLES 100
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
@@ -35,6 +36,13 @@ typedef struct {
     char* condition_cmd;
 } if_block_t;
 
+// Feature 8: Shell Variables - Linked List Node
+typedef struct var_node {
+    char* name;
+    char* value;
+    struct var_node* next;
+} var_node_t;
+
 // Background jobs (Feature 6)
 typedef struct {
     pid_t pid;
@@ -43,6 +51,9 @@ typedef struct {
 
 extern job_t jobs_list[MAX_JOBS];
 extern int jobs_count;
+
+// Feature 8: Variables linked list head
+extern var_node_t* variables_head;
 
 // Function prototypes from shell.c
 char** tokenize(char* cmdline);
@@ -68,5 +79,13 @@ int execute_condition(const char* cmd);
 void execute_block(char** block, int count);
 int execute_if_block(if_block_t* block);
 int handle_if_statement(char* cmdline);
+
+// Feature 8: Shell Variables functions (shell.c)
+var_node_t* find_variable(const char* name);
+void set_variable(const char* name, const char* value);
+void print_all_variables();
+void free_all_variables();
+int is_assignment(const char* cmd);
+char** expand_variables(char** arglist);
 
 #endif // SHELL_H
