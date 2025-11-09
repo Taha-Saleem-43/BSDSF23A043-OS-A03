@@ -1,6 +1,6 @@
 /* main.c
- * Contains: Main loop, history management, Feature 7 (if-then-else-fi)
- * Features: 4 (history), 5 (semicolon), 7 (if-then-else-fi)
+ * Contains: Main loop, history management, Feature 7 (if-then-else-fi), Feature 8 (variables)
+ * Features: 4 (history), 5 (semicolon), 7 (if-then-else-fi), 8 (variables)
  * Calls: shell.c (tokenize, handle_builtin), execute.c (execute)
  * Called by: OS entry point
  */
@@ -103,7 +103,6 @@ int read_if_block(if_block_t* block) {
     printf("if> ");
     fflush(stdout);
     
-    // Read the condition command
     if (fgets(buffer, sizeof(buffer), stdin) == NULL) {
         fprintf(stderr, "Error: unexpected EOF in if block\n");
         return 0;
@@ -170,6 +169,9 @@ int execute_condition(const char* cmd) {
         return 1;
     }
     
+    // Feature 8: Expand variables in condition
+    arglist = expand_variables(arglist);
+    
     int status;
     int cpid = fork();
     
@@ -201,6 +203,9 @@ void execute_block(char** block, int count) {
         
         char** arglist = tokenize(block[i]);
         if (arglist != NULL) {
+            // Feature 8: Expand variables before checking builtin
+            arglist = expand_variables(arglist);
+            
             if (!handle_builtin(arglist)) {
                 execute(arglist);
             }
@@ -283,10 +288,33 @@ int main() {
             add_to_history(cmd_copy);
             add_history(cmd_copy);
 
+            // Feature 8: Check for variable assignment
+            if (is_assignment(cmd_copy)) {
+                // Parse assignment
+                char* equal_pos = strchr(cmd_copy, '=');
+                int name_len = equal_pos - cmd_copy;
+                char name[ARGLEN];
+                strncpy(name, cmd_copy, name_len);
+                name[name_len] = '\0';
+                
+                char* value = equal_pos + 1;
+                // Remove quotes if present
+                if ((value[0] == '"' && value[strlen(value)-1] == '"') ||
+                    (value[0] == '\'' && value[strlen(value)-1] == '\'')) {
+                    value++;
+                    char* last = strchr(value, '\0') - 1;
+                    *last = '\0';
+                }
+                
+                set_variable(name, value);
+            }
             // Feature 7: Check if this is an if statement
-            if (is_if_statement(cmd_copy)) {
+            else if (is_if_statement(cmd_copy)) {
                 handle_if_statement(cmd_copy);
             } else if ((arglist = tokenize(cmd_copy)) != NULL) {
+                // Feature 8: Expand variables in command
+                arglist = expand_variables(arglist);
+                
                 if (!handle_builtin(arglist)) {
                     execute(arglist);
                 }
@@ -301,6 +329,7 @@ int main() {
         free(cmdline);
     }
 
+    free_all_variables();
     printf("\nShell exited.\n");
     return 0;
 }

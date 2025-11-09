@@ -1,10 +1,10 @@
 /* execute.c
  * Contains: Command execution engine
  * Features: 1 (basic), 2 (I/O redirection), 3 (piping), 6 (background jobs)
- * Called by: main.c handle_execute_block(), main.c handle_builtin()
+ * Called by: main.c execute_block(), main.c handle_builtin()
  * Calls: fork(), execvp(), waitpid(), dup2(), open(), close()
- * Note: COMPLETELY UNCHANGED - NO MODIFICATIONS for Feature 7
- * Global variables: USES jobs_list[], jobs_count from main.c (extern)
+ * Global variables: Uses jobs_list[], jobs_count from main.c (extern)
+ * Note: NO MODIFICATIONS for Features 7 & 8 - unchanged
  */
 
 #include "shell.h"
@@ -17,7 +17,7 @@ int execute(char* arglist[]) {
     for (int i = 0; arglist[i] != NULL; i++) {
         if (strcmp(arglist[i], "&") == 0) {
             run_in_background = 1;
-            arglist[i] = NULL; // remove '&' from arguments
+            arglist[i] = NULL;
             break;
         }
     }
@@ -82,10 +82,9 @@ int execute(char* arglist[]) {
             exit(1);
         } else {
             if (!run_in_background) {
-                waitpid(cpid, &status, 0); // foreground
+                waitpid(cpid, &status, 0);
             } else {
                 printf("[Background] PID: %d\n", cpid);
-                // Store in background job list
                 if (jobs_count < MAX_JOBS) {
                     jobs_list[jobs_count].pid = cpid;
                     strncpy(jobs_list[jobs_count].cmd, arglist[0], 255);
@@ -161,7 +160,7 @@ int execute(char* arglist[]) {
             if (fd_out < 0) { fprintf(stderr, "Error: cannot open output file '%s': %s\n", left_output, strerror(errno)); exit(1); }
             dup2(fd_out, STDOUT_FILENO); close(fd_out);
         } else {
-            dup2(fd[1], STDOUT_FILENO); // write to pipe
+            dup2(fd[1], STDOUT_FILENO);
         }
         close(fd[0]); close(fd[1]);
         execvp(left_cmd[0], left_cmd);
@@ -178,7 +177,7 @@ int execute(char* arglist[]) {
             if (fd_in < 0) { fprintf(stderr, "Error: cannot open input file '%s': %s\n", right_input, strerror(errno)); exit(1); }
             dup2(fd_in, STDIN_FILENO); close(fd_in);
         } else {
-            dup2(fd[0], STDIN_FILENO); // read from pipe
+            dup2(fd[0], STDIN_FILENO);
         }
         if (right_output) {
             int fd_out = open(right_output, O_WRONLY | O_CREAT | O_TRUNC, 0644);
