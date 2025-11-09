@@ -10,6 +10,11 @@
 #include <errno.h>
 #include <ctype.h>  // for isdigit()
 
+//Additional External Libraries
+#include <readline/readline.h>
+#include <readline/history.h>
+#include <dirent.h>
+
 #define MAX_LEN 512
 #define MAXARGS 10
 #define ARGLEN 30
@@ -29,6 +34,10 @@ int handle_builtin(char** args);
 // History-related functions
 void add_to_history(const char* cmdline);
 int handle_bang_command(char** cmdline_ptr);
+
+
+// Readline initialization
+void initialize_readline();
 
 #endif // SHELL_H
 
